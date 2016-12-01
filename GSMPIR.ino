@@ -1,4 +1,4 @@
-String ph1="75********92"; //Enter your phone number to call #01
+String ph1="75******92"; //Enter your phone number to call #01
 String ph2="89******25";   //Enter your phone number to call #02
 int inputPin = 8;
 int val=0;
