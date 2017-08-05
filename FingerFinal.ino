@@ -1,6 +1,7 @@
 #include <Adafruit_Fingerprint.h>
 #include <SoftwareSerial.h>
-
+#include <EEPROM.h>
+byte address  = 0;
 uint8_t id = 0;
 byte count = 0;
 int getFingerprintIDez();
@@ -10,6 +11,9 @@ Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 
 void setup()
 {
+  pinMode(13, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(11, OUTPUT);
   Serial.begin(9600);
   Serial.println("Adafruit finger detect test");
   finger.begin(57600);
@@ -27,13 +31,18 @@ void loop()
 {
   if (digitalRead(4) == HIGH)
   {
+    digitalWrite(13, 1);
     delay(250);
-    Serial.print("Enroll ID # "); Serial.println(id);
+    digitalWrite(13, 0);
+    Serial.print("Enroll ID # "); Serial.println(EEPROM.read(address));
     delay(50);
+
     getFingerprintEnroll();
   }
   if (digitalRead(5) == HIGH) {
+    digitalWrite(13, 1);
     delay(100);
+    digitalWrite(13, 0);
     count += 1;
     state = true;
     delay(150);
@@ -47,13 +56,17 @@ void loop()
     }
   }
 
-  getFingerprintIDez();
+  if (getFingerprintIDez() != -1) {
+    digitalWrite(11, HIGH);
+    delay(1000);
+    digitalWrite(11, LOW);
+  }
   delay(50);
 }
 
 uint8_t getFingerprintEnroll() {
   int p = -1;
-  Serial.print("Waiting for valid finger to enroll as #"); Serial.println(id);
+  Serial.print("Waiting for valid finger to enroll as #"); Serial.println(EEPROM.read(address));
   while (p != FINGERPRINT_OK) {
     p = finger.getImage();
     switch (p) {
@@ -111,7 +124,7 @@ uint8_t getFingerprintEnroll() {
   while (p != FINGERPRINT_NOFINGER) {
     p = finger.getImage();
   }
-  Serial.print("ID "); Serial.println(id);
+  Serial.print("ID "); Serial.println(EEPROM.read(address));
   p = -1;
   Serial.println("Place same finger again");
   while (p != FINGERPRINT_OK) {
@@ -160,7 +173,7 @@ uint8_t getFingerprintEnroll() {
   }
 
   // OK converted!
-  Serial.print("Creating model for #");  Serial.println(id);
+  Serial.print("Creating model for #");  Serial.println(EEPROM.read(address));
 
   p = finger.createModel();
   if (p == FINGERPRINT_OK) {
@@ -176,11 +189,15 @@ uint8_t getFingerprintEnroll() {
     return p;
   }
 
-  Serial.print("ID "); Serial.println(id);
-  p = finger.storeModel(id);
+  Serial.print("ID "); Serial.println(EEPROM.read(address));
+  p = finger.storeModel(EEPROM.read(address));
   if (p == FINGERPRINT_OK) {
     Serial.println("Stored!");
-    id += 1;
+    EEPROM.update(address, ++id);
+    Serial.println(EEPROM.read(address));
+    digitalWrite(12, 1);
+    delay(2500);
+    digitalWrite(12, 0);
   } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
     Serial.println("Communication error");
     return p;
@@ -204,8 +221,11 @@ uint8_t deleteFingerprint(uint8_t id) {
   if (p == FINGERPRINT_OK) {
     Serial.println("Deleted!");
     count = 0;
-    id -= 1;
+    EEPROM.update(address, id--);
+    Serial.println(EEPROM.read(address));
+    digitalWrite(12, 1);
     delay(1000);
+    digitalWrite(12, 0);
   } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
     Serial.println("Communication error");
     return p;
