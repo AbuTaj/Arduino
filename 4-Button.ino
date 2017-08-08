@@ -14,6 +14,7 @@ bool b4 = false;
 byte address1 = 1;
 int ccount = 0;
 bool statee = false;
+bool sstate = false;
 void setup()
 {
   //EEPROM.write(address1,202);
@@ -37,6 +38,7 @@ void loop()
   if (br == 1) {
     digitalWrite(13, HIGH);
     buttonUpdate();
+
   }
   if (br == 2)
   {
@@ -46,6 +48,7 @@ void loop()
   if (br >= 2) {
     br = 0;
   }
+
   if (digitalRead(4) == HIGH) {
     delay(250);
     ccount += 1;
@@ -54,13 +57,11 @@ void loop()
   if (ccount == 1) {
     if (button() == EEPROM.read(address1)) {
       digitalWrite(12, HIGH);
-      Serial.println("Finger by passed");
+      Serial.println("Fingerprint by passed");
+      ccount -= 1;
     }
   }
-  if (ccount == 2) {
-    Serial.println("Button OFF");
-  }
-  if (ccount >= 2) {
+  if (ccount > 1) {
     ccount = 0;
   }
 }
@@ -258,6 +259,7 @@ ep: int b = 0;
       Serial.println(EEPROM.read(address1));
       Serial.println("EEPROM Updated");
       statee = false;
+      br -= 1;
     }
   }
 }
